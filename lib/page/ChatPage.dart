@@ -39,6 +39,7 @@ class _ChatPageState extends State<ChatPage> {
   String _speakText = '';
 
   bool _isCopying = false;
+  bool _isImage = false;
 
   @override
   void didChangeDependencies() {
@@ -359,7 +360,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _renderMessageItem(Map message, int index) {
+    _isImage = false;
     String role = message['role'];
+    String content = message['content'];
     String defaultAvatar = 'images/logo.png';
     String defaultRoleName = 'ChatGPT';
     Color defaultColor = const Color.fromRGBO(229, 245, 244, 1);
@@ -395,6 +398,9 @@ class _ChatPageState extends State<ChatPage> {
           )
         ],
       );
+    } else if (role == 'assistant' && content.contains('https')) {
+      defaultIcons = [];
+      _isImage = true;
     }
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -447,21 +453,24 @@ class _ChatPageState extends State<ChatPage> {
             color: Color.fromRGBO(124, 119, 119, 1.0),
           ),
           const SizedBox(height: 10),
-          customContent ??
-              MarkdownBody(
-                data: '$defaultTextPrefix${message['content']}',
-                // data: 'This is a line\nThis is another line'.replaceAll('\n', '<br>'),
-                shrinkWrap: true,
-                selectable: true,
-                styleSheet: MarkdownStyleSheet(
-                  textScaleFactor: 1.1,
-                  textAlign: WrapAlignment.start,
-                  p: TextStyle(
-                    height: 1.5,
-                    color: defaultTextColor,
+          Visibility(
+            visible: !_isImage,
+            child: customContent ??
+                MarkdownBody(
+                  data: '$defaultTextPrefix${message['content']}',
+                  // data: 'This is a line\nThis is another line'.replaceAll('\n', '<br>'),
+                  shrinkWrap: true,
+                  selectable: true,
+                  styleSheet: MarkdownStyleSheet(
+                    textScaleFactor: 1.1,
+                    textAlign: WrapAlignment.start,
+                    p: TextStyle(
+                      height: 1.5,
+                      color: defaultTextColor,
+                    ),
                   ),
                 ),
-              ),
+          ),
         ],
       ),
     );
