@@ -471,6 +471,15 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
           ),
+          Visibility(
+              visible: !!_isImage,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.network(content),
+                ),
+              )),
         ],
       ),
     );
