@@ -1,14 +1,13 @@
 import 'package:aichat/components/QuestionInput.dart';
+import 'package:aichat/stores/AIChatStore.dart';
 import 'package:aichat/utils/Chatgpt.dart';
-import 'package:aichat/utils/Config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:aichat/stores/AIChatStore.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:provider/provider.dart';
-import 'package:lottie/lottie.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ChatPage extends StatefulWidget {
@@ -30,7 +29,8 @@ class ChatPage extends StatefulWidget {
 enum TtsState { playing, stopped, paused, continued }
 
 class _ChatPageState extends State<ChatPage> {
-  static final LottieBuilder _generatingLottie = Lottie.asset("images/loading2.json");
+  static final LottieBuilder _generatingLottie =
+      Lottie.asset("images/loading2.json");
 
   final ScrollController _listController = ScrollController();
 
@@ -144,6 +144,10 @@ class _ChatPageState extends State<ChatPage> {
     final store = Provider.of<AIChatStore>(context, listen: true);
     final chat = store.getChatById(widget.chatType, widget.chatId);
 
+    print("====chat list start====");
+    print(chat.toString());
+    print("====chat list end====");
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -251,7 +255,8 @@ class _ChatPageState extends State<ChatPage> {
                     currentState.questionController.text = tip;
                     currentState.focusNode.requestFocus();
                     currentState.questionController.selection =
-                        TextSelection.fromPosition(TextPosition(offset: tip.length));
+                        TextSelection.fromPosition(
+                            TextPosition(offset: tip.length));
                     setState(() {});
                   }
                 }

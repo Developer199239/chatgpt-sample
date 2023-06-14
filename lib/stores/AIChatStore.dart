@@ -116,6 +116,11 @@ chat
   }
 
   Future<Map> pushMessage(Map chat, Map message) async {
+    print("===pushMessage chat===");
+    print(chat);
+    print("===pushMessage message===");
+    print(message);
+
     Map? cacheHistory = chatList.firstWhere(
       (v) => v['id'] == chat['id'],
       orElse: () => null,
@@ -161,7 +166,9 @@ chat
   }
 
   Future pushStreamMessage(String chatId, int messageIndex, Map message) async {
-    if (chatId != '' && message['content'] != '' && message['content'] != null) {
+    if (chatId != '' &&
+        message['content'] != '' &&
+        message['content'] != null) {
       final index = chatList.indexWhere((v) => v['id'] == chatId);
       Map current = chatList[index]['messages'][messageIndex];
 

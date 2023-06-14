@@ -158,23 +158,7 @@ class _QuestionInputState extends State<QuestionInput> {
       'content': '',
     });
     try {
-      // void onProgress(chatStreamEvent) {
-      //   final firstCompletionChoice = chatStreamEvent.choices.first;
-      //   if (firstCompletionChoice.finishReason == 'stop') {
-      //     _updateGeneratingStatus(false);
-      //     return;
-      //   }
-      //   store.pushStreamMessage(chat['id'], messageIndex, {
-      //     'role': 'assistant',
-      //     'content': firstCompletionChoice.delta.content,
-      //   });
-      // }
-      //
-      // ChatGPT.sendMessageOnStream(
-      //   messages,
-      //   onProgress: onProgress,
-      // );
-      final response = await ChatGPT.sendMessage(messages);
+      final response = await ChatGPT.sendMessage(messages, "todo");
       final firstCompletionChoice = response.choices.first;
       await store.replaceMessage(chat['id'], messageIndex, {
         'role': 'assistant',
@@ -246,7 +230,7 @@ class _QuestionInputState extends State<QuestionInput> {
       widget.scrollToBottom!();
     }
     try {
-      final response = await ChatGPT.sendMessage(messages);
+      final response = await ChatGPT.sendMessage(messages, text);
       final firstCompletionChoice = response.choices.first;
       await store.replaceMessage(chat['id'], messageIndex, {
         'role': 'assistant',

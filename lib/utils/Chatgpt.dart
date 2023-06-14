@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_storage/get_storage.dart';
 
+import '../services/api_service.dart';
+
 class ChatGPT {
   static final ChatGPT _instance = ChatGPT._();
 
@@ -17,6 +19,8 @@ class ChatGPT {
   }
 
   static GetStorage storage = GetStorage();
+
+  static ApiClass apiClass = ApiClass();
 
   static String chatGptToken =
       dotenv.env['OPENAI_CHATGPT_TOKEN'] ?? ''; // token
@@ -311,6 +315,7 @@ class ChatGPT {
           "content": text,
         }
       ],
+      text,
       model: model,
     );
     debugPrint('---text $text---');
@@ -321,12 +326,40 @@ class ChatGPT {
   }
 
   static Future<OpenAIChatCompletionModel> sendMessage(
-    List messages, {
+    List messages,
+    String prompt, {
     String model = '',
   }) async {
     messages = filterMessageParams(messages);
     List<OpenAIChatCompletionChoiceMessageModel> modelMessages =
         convertListToModel(messages);
+
+    String result = await apiClass.mainApi(prompt, chatGptToken);
+
+    if (result == "yes") {
+      final String responseImage =
+          await apiClass.imageGenerationApi(prompt, chatGptToken);
+
+      OpenAIChatCompletionChoiceMessageModel
+          openAIChatCompletionChoiceMessageModel =
+          OpenAIChatCompletionChoiceMessageModel(
+              role: OpenAIChatMessageRole.assistant, content: responseImage);
+      OpenAIChatCompletionChoiceModel cmodel = OpenAIChatCompletionChoiceModel(
+          index: 0,
+          message: openAIChatCompletionChoiceMessageModel,
+          finishReason: '');
+
+      List<OpenAIChatCompletionChoiceModel> choices = [];
+      choices.add(cmodel);
+
+      OpenAIChatCompletionModel model = OpenAIChatCompletionModel(
+          id: '',
+          created: DateTime.now(),
+          choices: choices,
+          usage: OpenAIChatCompletionUsageModel(
+              promptTokens: 0, completionTokens: 0, totalTokens: 0));
+      return model;
+    }
     OpenAIChatCompletionModel chatCompletion =
         await OpenAI.instance.chat.create(
       model: model != '' ? model : defaultModel,
