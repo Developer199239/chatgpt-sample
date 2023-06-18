@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:aichat/components/QuestionInput.dart';
+import 'package:aichat/page/view_image.dart';
 import 'package:aichat/stores/AIChatStore.dart';
 import 'package:aichat/utils/Chatgpt.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -446,6 +447,8 @@ class _ChatPageState extends State<ChatPage> {
     } else if (role == 'assistant' && content.contains('https')) {
       defaultIcons = [
         _renderDownloadWidget(content),
+        const SizedBox(width: 6),
+        _shareImageWidget(content),
       ];
       _isImage = true;
     }
@@ -530,10 +533,8 @@ class _ChatPageState extends State<ChatPage> {
                   borderRadius: receiverBorder,
                 ),
                 child: GestureDetector(
-                    // onTap: () => viewImage(context, content),
                     onTap: () => {
-                          // saveImage(content)
-                          share(content)
+                          viewImage(context, content),
                         },
                     child: CachedNetworkImage(
                       imageUrl: content,
@@ -578,6 +579,21 @@ class _ChatPageState extends State<ChatPage> {
         padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
         child: const Image(
           image: AssetImage('images/ic_download.png'),
+          width: 26,
+        ),
+      ),
+    );
+  }
+
+  Widget _shareImageWidget(String url) {
+    return GestureDetector(
+      onTap: () async {
+        _showToastMsg('Under development');
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+        child: const Image(
+          image: AssetImage('images/share_message_icon.png'),
           width: 26,
         ),
       ),
