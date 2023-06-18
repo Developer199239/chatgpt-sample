@@ -1,14 +1,22 @@
+import 'dart:io';
+
 import 'package:aichat/components/QuestionInput.dart';
 import 'package:aichat/stores/AIChatStore.dart';
 import 'package:aichat/utils/Chatgpt.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:lottie/lottie.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:share/share.dart';
+
+import '../utils/constants.dart';
 
 class ChatPage extends StatefulWidget {
   final String chatId;
@@ -137,6 +145,43 @@ class _ChatPageState extends State<ChatPage> {
     // );
     if (_listController.hasClients) {
       _listController.jumpTo(_listController.position.maxScrollExtent);
+    }
+  }
+
+  void saveImage(String imageUrl) async {
+    try {
+      final cacheManager = DefaultCacheManager();
+      final fileInfo = await cacheManager.getFileFromCache(imageUrl);
+
+      final appDir = await getTemporaryDirectory();
+      final file = File('${appDir.path}/ai_generated_image.jpg');
+      await fileInfo?.file.copy(file.path);
+
+      final result = await ImageGallerySaver.saveFile(file.path);
+      if (result['isSuccess']) {
+        print('Image saved to gallery');
+      } else {
+        print('Failed to save image: ${result['errorMessage']}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  void share(String imageUrl) async {
+    try {
+      final cacheManager = DefaultCacheManager();
+      final fileInfo = await cacheManager.getFileFromCache(imageUrl);
+
+      final fileBytes = await fileInfo?.file.readAsBytes();
+
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = await File('${tempDir.path}/image.jpg').create();
+      await tempFile.writeAsBytes(fileBytes!.toList());
+
+      Share.shareFiles([tempFile.path], text: 'Check out this image!');
+    } catch (e) {
+      print('Error: $e');
     }
   }
 
@@ -473,12 +518,34 @@ class _ChatPageState extends State<ChatPage> {
           ),
           Visibility(
               visible: !!_isImage,
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.network(content),
+              child: Container(
+                height: 250,
+                width: 250,
+                padding: const EdgeInsets.all(0),
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  borderRadius: receiverBorder,
                 ),
+                child: GestureDetector(
+                    // onTap: () => viewImage(context, content),
+                    onTap: () => {
+                          saveImage(content)
+                          // share(content)
+                        },
+                    child: CachedNetworkImage(
+                      imageUrl: content,
+                      fit: BoxFit.cover,
+                      maxHeightDiskCache: 250,
+                      progressIndicatorBuilder:
+                          (context, url, downloadProgress) => Center(
+                              child: CircularProgressIndicator(
+                        value: downloadProgress.progress,
+                        color: Colors.white,
+                      )),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error),
+                    )),
               )),
         ],
       ),
