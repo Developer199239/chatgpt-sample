@@ -44,6 +44,7 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.flutter.share"
@@ -53,5 +54,8 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/flutter_share_file_paths" />
         </provider>
+
+
+
     </application>
 </manifest>

@@ -204,10 +204,11 @@ class _ChatPageState extends State<ChatPage> {
       final fileInfo = await cacheManager.getFileFromCache(imageUrl);
 
       final appDir = await getTemporaryDirectory();
-      final file = File('${appDir.path}/ai_generated_image.jpg');
-      await fileInfo?.file.copy(file.path);
+      final filePath = '${appDir.path}/ai_generated_image.jpg';
 
-      Share.shareFiles([file.path], text: 'Check out this image!');
+      await fileInfo?.file.copy(filePath);
+
+      Share.shareFiles([filePath], text: 'Check out this image!');
     } catch (e) {
       print('Error: $e');
     }
@@ -589,6 +590,7 @@ class _ChatPageState extends State<ChatPage> {
     return GestureDetector(
       onTap: () async {
         _showToastMsg('Under development');
+        share(url);
       },
       child: Container(
         padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
