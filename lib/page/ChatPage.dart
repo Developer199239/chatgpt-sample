@@ -10,9 +10,11 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:share/share.dart';
 
@@ -148,7 +150,33 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void saveImage(String imageUrl) async {
+  void _showToastMsg(String msg) {
+    Fluttertoast.showToast(
+      msg: msg,
+      toastLength:
+          Toast.LENGTH_SHORT, // Duration for which the toast is visible
+      gravity: ToastGravity.BOTTOM, // Position of the toast on the screen
+      backgroundColor: Colors.grey[700], // Background color of the toast
+      textColor: Colors.white, // Text color of the toast
+      fontSize: 16.0, // Font size of the toast message
+    );
+  }
+
+  void _checkFileDownloadPermission(String url) async {
+    PermissionStatus status = await Permission.storage.status;
+    if (status.isGranted) {
+      _downloadImage(url);
+    } else {
+      PermissionStatus requestStatus = await Permission.storage.request();
+      if (requestStatus.isGranted) {
+        _downloadImage(url);
+      } else {
+        _showToastMsg("Permission denied");
+      }
+    }
+  }
+
+  void _downloadImage(String imageUrl) async {
     try {
       final cacheManager = DefaultCacheManager();
       final fileInfo = await cacheManager.getFileFromCache(imageUrl);
@@ -159,12 +187,13 @@ class _ChatPageState extends State<ChatPage> {
 
       final result = await ImageGallerySaver.saveFile(file.path);
       if (result['isSuccess']) {
-        print('Image saved to gallery');
+        await file.delete(); // Remove the temporary file
+        _showToastMsg('Image saved to gallery');
       } else {
-        print('Failed to save image: ${result['errorMessage']}');
+        _showToastMsg('Failed to save image: ${result['errorMessage']}');
       }
     } catch (e) {
-      print('Error: $e');
+      _showToastMsg('Error: $e');
     }
   }
 
@@ -173,13 +202,11 @@ class _ChatPageState extends State<ChatPage> {
       final cacheManager = DefaultCacheManager();
       final fileInfo = await cacheManager.getFileFromCache(imageUrl);
 
-      final fileBytes = await fileInfo?.file.readAsBytes();
+      final appDir = await getTemporaryDirectory();
+      final file = File('${appDir.path}/ai_generated_image.jpg');
+      await fileInfo?.file.copy(file.path);
 
-      final tempDir = await getTemporaryDirectory();
-      final tempFile = await File('${tempDir.path}/image.jpg').create();
-      await tempFile.writeAsBytes(fileBytes!.toList());
-
-      Share.shareFiles([tempFile.path], text: 'Check out this image!');
+      Share.shareFiles([file.path], text: 'Check out this image!');
     } catch (e) {
       print('Error: $e');
     }
@@ -189,10 +216,6 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     final store = Provider.of<AIChatStore>(context, listen: true);
     final chat = store.getChatById(widget.chatType, widget.chatId);
-
-    print("====chat list start====");
-    print(chat.toString());
-    print("====chat list end====");
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -360,21 +383,6 @@ class _ChatPageState extends State<ChatPage> {
 
   /// TODO Performance optimization?
   Widget _genMessageListWidget(List messages) {
-    // List<Widget> list = [];
-    // for (var i = 0; i < messages.length; i++) {
-    //   list.add(
-    //     _genMessageItemWidget(messages[i], i),
-    //   );
-    // }
-    // list.add(
-    //   const SizedBox(height: 10),
-    // );
-    // return SingleChildScrollView(
-    //   child: Column(
-    //     children: list,
-    //   ),
-    // );
-
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 20),
       addAutomaticKeepAlives: false,
@@ -389,14 +397,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _genMessageItemWidget(Map message, int index) {
-    // String role = message['role'];
-    // if (role == 'generating') {
-    //   return SizedBox(
-    //     height: 160,
-    //     child: _generatingLottie,
-    //   );
-    // }
-
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
@@ -444,7 +444,9 @@ class _ChatPageState extends State<ChatPage> {
         ],
       );
     } else if (role == 'assistant' && content.contains('https')) {
-      defaultIcons = [];
+      defaultIcons = [
+        _renderDownloadWidget(content),
+      ];
       _isImage = true;
     }
     return Container(
@@ -530,8 +532,8 @@ class _ChatPageState extends State<ChatPage> {
                 child: GestureDetector(
                     // onTap: () => viewImage(context, content),
                     onTap: () => {
-                          saveImage(content)
-                          // share(content)
+                          // saveImage(content)
+                          share(content)
                         },
                     child: CachedNetworkImage(
                       imageUrl: content,
@@ -562,6 +564,21 @@ class _ChatPageState extends State<ChatPage> {
         child: const Image(
           image: AssetImage('images/share_message_icon.png'),
           width: 22,
+        ),
+      ),
+    );
+  }
+
+  Widget _renderDownloadWidget(String url) {
+    return GestureDetector(
+      onTap: () async {
+        _checkFileDownloadPermission(url);
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+        child: const Image(
+          image: AssetImage('images/ic_download.png'),
+          width: 26,
         ),
       ),
     );
