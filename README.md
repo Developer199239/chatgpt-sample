@@ -96,5 +96,3 @@ signingConfigs {
      }
 }
 ```
-
-https://drive.google.com/file/d/12WjsRxeeOXrP0F1vPuVJBoWEv8LaImwo/view?usp=sharing 
